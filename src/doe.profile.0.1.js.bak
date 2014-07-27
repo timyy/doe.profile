@@ -1,0 +1,261 @@
+\uFEFF/* *
+ * DOE pipeline profile
+ * @version 0.1.0
+ * @Explain DOE profile \u662F\u4E00\u4E2AHTML5\u7EB5\u65AD\u9762\u5F15\u64CE\uFF0C\u5B83\u53EF\u4EE5\u5FEB\u901F\u65B9\u4FBF\u7684\u8FDB\u884C\u7EB5\u65AD\u9762\u7ED8\u5236\u548C\u7F16\u8F91\u3002
+ * @author Timyy
+ * @email timyycn@gmail.com
+ * @copyright
+ */
+// DOE Profile \u4EE3\u7801
+// \u7248\u6743\u6240\u6709
+// by timyy 2014
+//
+// \u91C7\u7528JSDOC\u505A\u6807\u6CE8
+/* *
+ * @class doe
+ * @constructor
+ * \u6839\u7C7B
+ */
+var doe =
+{
+   version : "0.1.0"
+}
+;
+
+//
+function  doe_feature(type)
+{
+
+   this._type = type;
+   // point , line , area
+   this.dataset = [];
+   var myline = d3.svg.line()
+   .x(function(d)
+   {
+      return d[0];
+
+   }
+   )
+   .y(function(d)
+   {
+      return d[1];
+
+   }
+   )
+   .interpolate("linear");
+   if(typeof doe_feature._initialized == "undefined"	)
+   {
+      doe_feature.prototype.show = function(g)
+      {
+         switch(this._type)
+         {
+            case "point" :
+               // \u6267\u884C\u4EE3\u7801\u5757 1
+               break;
+            case "line" :
+               // \u6267\u884C\u4EE3\u7801\u5757 2
+               g.append("path")
+               .attr("d", myline(this.dataset))
+               .attr("stroke", "blue")
+               .attr("stroke-width", 2)
+               .attr("fill", "none");
+               break;
+            default :
+            // n \u4E0E case 1 \u548C case 2 \u4E0D\u540C\u65F6\u6267\u884C\u7684\u4EE3\u7801
+         }
+
+         alert(this._type);
+      }
+      doe_feature._initialized = true;
+   }
+}
+
+// feature collection
+var featureCollection =
+{
+   "layerDefinition" : null,
+   "featureSet" :
+   {
+      "features" : [],
+      "geometryType" : "esriGeometryPoint"
+   }
+   ,
+   AddFeature : function(type)
+   {
+      var afeature = new doe_feature(type);
+      this.featureSet.features.push(afeature);
+      this.featureSet.geometryType = type;
+   }
+   ,
+   show : function(g)
+   {
+      this.featureSet.features.forEach( function(item)
+      {
+
+         item.show(g);
+      }
+      );
+   }
+}
+;
+
+/* *
+ * @class doe.profile
+ * @constructor
+ * @param {String} name
+ * @param {String} color
+ */
+doe.profile = function(name, width, height)
+{
+   /* *
+   * @field {String} name
+   * @field {int} width
+   * @field {int} height
+   * @public
+   */
+   this.name = name;
+   /* *
+   * @field {int} width
+   * @public
+   */
+   this.width = width;
+   this.height = height;
+   this._features = featureCollection;
+   this._padding = 30;
+   this.g =
+   {
+      "svg" : null,
+      "xScale" : null,
+      "yScale" : null
+   }
+
+
+
+   /* *
+   * @field {Array} _dataset
+   * @private
+   */
+   this.dataset = [];
+   if(typeof this._initialized == "undefined"	)
+   {
+      doe.profile.prototype.init = function()
+      {
+         this.g.svg = d3.select(this.name)
+         .append("svg")
+         .attr("width", this.width)
+         .attr("height", this.height);
+         // \u5B9A\u4E49\u526A\u5207\u8DEF\u5F84
+         this.g.svg.append("clipPath") // \u521B\u5EFA\u65B0\u7684clipPath \u5143\u7D20
+         .attr("id", "chart-area") // \u4E3A\u5B83\u6307\u5B9AID
+         .append("rect") // \u5728clipPath \u4E2D\uFF0C\u521B\u5EFA\u5E76\u6DFB\u52A0\u65B0\u7684rect\u5143\u7D20
+         .attr("x", this._padding) // \u8BBE\u7F6Erect \u7684\u4F4D\u7F6E\u548C\u5927\u5C0F\u2026\u2026
+         .attr("y", this._padding)
+         .attr("width", this.width - this._padding * 2)
+         .attr("height", this.height - this._padding * 2);
+      }
+      doe.profile.prototype.show = function(map)
+      {
+         if (this.dataset.length == 0)
+         {
+            alert("\u6CA1\u6709\u6570\u636E!");
+         }
+         else
+         {
+
+            this.xScale = d3.scale.linear()
+            .domain([0, d3.max(this.dataset, function(d)
+            {
+               return d[0];
+            }
+            )])
+            .range([this._padding, this.width - this._padding]);
+            this.yScale = d3.scale.linear()
+            .domain([0, d3.max(this.dataset, function(d)
+            {
+               return d[1];
+            }
+            )])
+            .range([this.height - this._padding , this._padding]);
+            // \u5750\u6807\u53CD\u8F6C
+
+            var _scaleDataset = [];
+            // \u6570\u7EC4\u6309X\u7684\u5927\u5C0F\u6392\u5E8F
+            this.dataset.sort(function(a, b)
+            {
+               return (a[0] - b[0]);
+            }
+            );
+            // \u725BX\uFF0Cby timyy
+            for (var i = 0; i < this.dataset.length; i ++ )
+            {
+               // \u4F5C\u4E0B\u6570\u636E\u62BD\u7A00\uFF0C\u63D0\u9AD8\u6027\u80FD\u3002
+               var x = Math.floor( this.xScale(this.dataset[i][0]));
+               var y = Math.floor(this.yScale(this.dataset[i][1]));
+               if( i > 0 )
+               {
+                  if(x == _scaleDataset[_scaleDataset.length - 1][0] )
+                  {
+                     // \u6570\u636E\u5355\u8C03\u5F88\u91CD\u8981\uFF0C\u8981\u662F\u8003\u8651y\u7684\u76F8\u7B49\uFF0C\u6570\u636E\u62BD\u7A00\u6548\u679C\u5F88\u5DEE\uFF0C\u4F46\u53EA\u8003\u8651x\uFF0C\u51E0\u4E07\u4E2A\u70B9\u5C31\u53D8\u6210\u4E86\u4E0D\u591A\u4E8Ewidth\u4E2A\u3002
+                     // \u4F46\u662F\uFF0C\u76EE\u524D\u53D6\u6574\u662F\u53D6\u51B3\u4E8E\u539F\u59CB\u6570\u636E\uFF0C\u5E94\u8BE5\u6309\u7167\u50CF\u7D20
+                     // \u4E0D\u52A0\u70B9
+                     // \u6D4B\u8BD5\u8868\u660E\uFF0C2\uFF0C500\uFF0C000\u4E2A\u70B9\uFF0C\u75289\u79D2\u300210\u4E07\u4E2A\u70B9\u5E94\u8BE5\u6CA1\u6709\u95EE\u9898\uFF0C\u70B9\u6570\u4F1A\u5C11\u4E8E\u50CF\u7D20\u70B9
+
+                     // _scaleDataset.push([x, y]);
+                  }
+                  else
+                  {
+                     _scaleDataset.push([x, y]);
+                  }
+
+               }
+               else
+               {
+                  _scaleDataset.push([x, y]);
+               }
+            }
+            // alert(_scaleDataset.length);
+
+            var g = this.svg.append("g") // \u521B\u5EFA\u65B0\u7684g \u5143\u7D20
+            .attr("id", "paths") // \u6307\u5B9A\u5B83\u7684ID \u4E3Acircles
+            .attr("clip-path", "url(#chart-area)");
+            // \u6DFB\u52A0\u5BF9clipPath \u7684\u5F15\u7528
+            this._features.show(g);
+
+            this.xAxis = d3.svg.axis()
+            .scale(this.xScale)
+            .orient("bottom")
+            .ticks(5);
+            this.svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + (this.height - this._padding) + ")")
+            .call(this.xAxis);
+            this.xAxis2 = d3.svg.axis()
+            .scale(this.xScale)
+            .orient("bottom")
+            .ticks(0);
+            this.svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + this._padding + " )")
+            .call(this.xAxis2);
+            this.yAxis = d3.svg.axis()
+            .scale(this.yScale)
+            .orient("left")
+            .ticks(5);
+            this.svg.append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + this._padding + " ,0)")
+            .call(this.yAxis);
+            this.yAxis2 = d3.svg.axis()
+            .scale(this.yScale)
+            .orient("left")
+            .ticks(0);
+            this.svg.append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + ( this.width - this._padding) + " ,0)")
+            .call(this.yAxis2);
+         }
+      }
+   }
+   this._initialized = true;
+
+}
