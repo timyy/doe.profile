@@ -12,7 +12,7 @@ describe('doe.presets.Collection',function(){
             tags: {},
             geometry: ['area']
         }),
-        residential: doe.presets.Preset('highway/residential', {
+        residential: doe.presets.Preset('profile', {
             tags: {
                 highway: 'residential'
             },
